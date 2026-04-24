@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nielit Community</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Auth screens -->
+    <div id="auth-container">
+      <div class="auth-box">
+        <h1>Nielit Community</h1>
+        <div id="login-form">
+          <h2>Login</h2>
+          <input type="text" id="login-username" placeholder="Username" />
+          <input type="password" id="login-password" placeholder="Password" />
+          <button onclick="login()">Log In</button>
+          <p>Don't have an account? <a href="#" onclick="showSignup()">Sign up</a></p>
+        </div>
+        <div id="signup-form" style="display:none">
+          <h2>Sign Up</h2>
+          <input type="text" id="signup-username" placeholder="Username" />
+          <input type="email" id="signup-email" placeholder="Email" />
+          <input type="password" id="signup-password" placeholder="Password" />
+          <input type="text" id="signup-fullname" placeholder="Full Name" />
+          <button onclick="signup()">Create Account</button>
+          <p>Already have an account? <a href="#" onclick="showLogin()">Log in</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main app after login -->
+    <div id="main-app" style="display:none">
+      <header>
+        <div class="logo">Nielit Community</div>
+        <nav>
+          <a href="#" id="nav-profile">Profile</a>
+          <a href="#" id="nav-friends">Friends</a>
+          <a href="#" id="nav-pages">Pages</a>
+          <button id="logout-btn">Logout</button>
+        </nav>
+      </header>
+      <div class="container">
+        <aside class="sidebar">
+          <div class="user-card">
+            <div id="user-info"></div>
+          </div>
+          <div class="create-post-btn">
+            <button onclick="openCreatePost()">+ Create Post</button>
+          </div>
+        </aside>
+        <main class="feed">
+          <div id="feed-container"></div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create post modal -->
+  <div id="post-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeCreatePost()">&times;</span>
+      <h2>Create Post</h2>
+      <textarea id="post-text" placeholder="What's on your mind?"></textarea>
+      <div class="post-options">
+        <label>Add photos/videos <input type="file" id="media-upload" multiple accept="image/*,video/*" onchange="previewMedia()"/></label>
+        <div id="media-preview"></div>
+        <input type="text" id="post-location" placeholder="Location (e.g., City)" />
+        <input type="text" id="post-feeling" placeholder="Feeling/Activity (e.g., Happy)" />
+        <div id="poll-options">
+          <input type="text" id="poll-opt1" placeholder="Option 1" />
+          <input type="text" id="poll-opt2" placeholder="Option 2" />
+        </div>
+        <label>Visibility:
+          <select id="post-visibility">
+            <option value="public">Public</option>
+            <option value="friends">Friends</option>
+            <option value="friends_of_friends">Friends of Friends</option>
+            <option value="only_me">Only Me</option>
+          </select>
+        </label>
+        <button onclick="createPost()">Post</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
+</html>
