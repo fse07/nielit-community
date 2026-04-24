@@ -1,0 +1,59 @@
+# ─── Secrets ────────────────────────────────────────────────
+# Never commit .env — only .env.example
+.env
+.env.local
+.env.production
+*.key
+*.pem
+secrets/
+
+# ─── Python ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# ─── Development databases ──────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+
+# ─── Container state / volumes (if you bind-mount locally) ──
+caddy_data/
+caddy_config/
+postgres_data/
+app_uploads/
+
+# ─── User uploads — never commit, they're runtime data ──────
+app/static/uploads/images/*
+app/static/uploads/videos/*
+app/static/uploads/avatars/*
+app/static/uploads/covers/*
+!app/static/uploads/**/.gitkeep
+
+# ─── Editor / OS ────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── Logs ──────────────────────────────────────────────────
+*.log
+logs/

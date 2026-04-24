@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Groups · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">
+    👥 Groups
+    <a href="{{ url_for('groups.create') }}" class="btn btn-primary btn-sm">+ Create group</a>
+  </div>
+</div>
+
+{% if my_groups %}
+<div class="card">
+  <h3 style="margin-top:0;">Your groups</h3>
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px;">
+    {% for g in my_groups %}
+      <a href="{{ url_for('groups.detail', slug=g.slug) }}" style="display:block; border:1px solid var(--border); border-radius:12px; overflow:hidden; color:inherit;">
+        <div style="height:80px; background:{% if g.cover %}url(/static/uploads/images/{{ g.cover }}) center/cover{% else %}linear-gradient(135deg, var(--primary), #3b82f6){% endif %};"></div>
+        <div style="padding:12px;">
+          <div style="font-weight:700;">{{ g.name }}</div>
+          <div style="color:var(--text-muted); font-size:.85em; margin-top:2px;">{{ g.member_count() }} members · {{ g.privacy }}</div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3 style="margin-top:0;">Discover</h3>
+  {% if discover %}
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px;">
+    {% for g in discover %}
+      <div style="border:1px solid var(--border); border-radius:12px; overflow:hidden;">
+        <a href="{{ url_for('groups.detail', slug=g.slug) }}" style="display:block; color:inherit;">
+          <div style="height:80px; background:{% if g.cover %}url(/static/uploads/images/{{ g.cover }}) center/cover{% else %}linear-gradient(135deg, #6366f1, #a78bfa){% endif %};"></div>
+          <div style="padding:12px;">
+            <div style="font-weight:700;">{{ g.name }}</div>
+            <div style="color:var(--text-muted); font-size:.85em;">{{ g.member_count() }} members</div>
+            {% if g.description %}<div style="font-size:.88em; margin-top:6px; color:var(--text-muted);">{{ g.description[:80] }}{% if g.description|length > 80 %}…{% endif %}</div>{% endif %}
+          </div>
+        </a>
+        <form method="post" action="{{ url_for('groups.join', slug=g.slug) }}" style="padding:0 12px 12px; margin:0;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-primary btn-block btn-sm">+ Join</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:var(--text-muted);">No groups to discover yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

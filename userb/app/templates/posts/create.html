@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Create post · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">✏️ Create a post</div>
+  <form method="post" enctype="multipart/form-data" id="create-post-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {# Author row #}
+    <div style="display:flex; gap:12px; align-items:center; margin-bottom:16px;">
+      <div class="avatar">
+        {% if current_user.avatar %}<img src="{{ current_user.avatar_url() }}" alt="">{% else %}{{ current_user.initials() }}{% endif %}
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:700;">{{ current_user.full_name }}</div>
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <select name="target_kind" id="target_kind" style="width:auto; font-size:.88em; padding:4px 8px;">
+            <option value="profile">📝 Your timeline</option>
+            {% if pages %}<optgroup label="Your pages">
+              {% for p in pages %}<option value="page" data-id="{{ p.id }}">📄 {{ p.name }}</option>{% endfor %}
+            </optgroup>{% endif %}
+            {% if groups %}<optgroup label="Your groups">
+              {% for g in groups %}<option value="group" data-id="{{ g.id }}">👥 {{ g.name }}</option>{% endfor %}
+            </optgroup>{% endif %}
+          </select>
+          <input type="hidden" name="target_id" id="target_id" value="">
+          <select name="visibility" id="visibility" style="width:auto; font-size:.88em; padding:4px 8px;">
+            <option value="friends">👥 Friends</option>
+            <option value="friends_of_friends">👫 Friends of friends</option>
+            <option value="public">🌐 Public</option>
+            <option value="only_me">🔒 Only me</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {# Content #}
+    <div class="form-group">
+      <textarea name="content" rows="4" placeholder="What's on your mind, {{ current_user.full_name.split()[0] }}?" style="border-radius:8px; padding:12px; font-size:1.05em;"></textarea>
+    </div>
+
+    {# Optional context #}
+    <details style="margin-bottom:12px;">
+      <summary style="cursor:pointer; color:var(--text-muted); font-size:.9em; padding:4px;">Add feeling, location, or link</summary>
+      <div style="padding:10px 0; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <input type="text" name="feeling" placeholder="Feeling (e.g. happy, excited)" maxlength="60">
+        <input type="text" name="location" placeholder="Location" maxlength="200">
+        <input type="url" name="link_url" placeholder="Paste a link (YouTube, article, etc.)" style="grid-column:1/-1;">
+      </div>
+    </details>
+
+    {# Media uploads #}
+    <div class="form-group" id="media-group">
+      <label style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <span>📷 Photos / Videos <small style="color:var(--text-muted); font-weight:normal;">(max 10 files, videos ≤ 50MB)</small></span>
+      </label>
+      <input type="file" name="media" multiple accept="image/*,video/*" id="media-input">
+      <div id="media-preview" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
+      <label style="display:flex; align-items:center; gap:6px; margin-top:6px; font-size:.88em; color:var(--text-muted);">
+        <input type="checkbox" name="short_video" style="width:auto;"> Mark as short/vertical video (reel-style)
+      </label>
+    </div>
+
+    {# Poll #}
+    <details style="margin-bottom:12px;" id="poll-details">
+      <summary style="cursor:pointer; font-weight:600; padding:4px;">📊 Add a poll</summary>
+      <div style="padding:10px 0;">
+        <input type="text" name="poll_question" placeholder="Your question" maxlength="500" style="margin-bottom:8px;">
+        <div id="poll-options">
+          <input type="text" name="poll_options" placeholder="Option 1" maxlength="200" style="margin-bottom:6px;">
+          <input type="text" name="poll_options" placeholder="Option 2" maxlength="200" style="margin-bottom:6px;">
+        </div>
+        <button type="button" id="add-poll-option" class="btn btn-sm">+ Add option</button>
+        <label style="display:flex; align-items:center; gap:6px; margin-top:10px; font-size:.88em; color:var(--text-muted);">
+          <input type="checkbox" name="poll_multi" style="width:auto;"> Allow multiple answers
+        </label>
+      </div>
+    </details>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <a href="{{ url_for('feed.home') }}" class="btn">Cancel</a>
+      <button type="submit" class="btn btn-primary btn-lg">Publish post</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  // Target kind syncs target_id
+  const tk = document.getElementById('target_kind');
+  const tid = document.getElementById('target_id');
+  tk.addEventListener('change', function() {
+    const sel = tk.options[tk.selectedIndex];
+    const kind = sel.value;
+    tid.value = sel.dataset.id || '';
+    // Keep tk as the kind only (page/group/profile)
+    tk.value = kind;
+  });
+
+  // Poll options
+  document.getElementById('add-poll-option').addEventListener('click', function() {
+    const opts = document.getElementById('poll-options');
+    if (opts.children.length >= 8) return;
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.name = 'poll_options';
+    inp.placeholder = 'Option ' + (opts.children.length + 1);
+    inp.maxLength = 200;
+    inp.style.marginBottom = '6px';
+    opts.appendChild(inp);
+  });
+
+  // Media previews
+  const mediaInput = document.getElementById('media-input');
+  const preview = document.getElementById('media-preview');
+  mediaInput.addEventListener('change', function() {
+    preview.innerHTML = '';
+    [...mediaInput.files].slice(0, 10).forEach(f => {
+      const box = document.createElement('div');
+      box.style.cssText = 'width:80px; height:80px; border-radius:8px; overflow:hidden; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text-muted); text-align:center; padding:4px;';
+      if (f.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        img.style.cssText = 'width:100%; height:100%; object-fit:cover;';
+        box.innerHTML = '';
+        box.appendChild(img);
+      } else if (f.type.startsWith('video/')) {
+        box.innerHTML = '🎬<br>' + f.name.slice(0, 14);
+      }
+      preview.appendChild(box);
+    });
+  });
+
+  // Apply query param preset (?type=photo|poll|link)
+  const params = new URLSearchParams(location.search);
+  const t = params.get('type');
+  if (t === 'poll') document.getElementById('poll-details').open = true;
+  if (t === 'photo') mediaInput.click();
+})();
+</script>
+{% endblock %}

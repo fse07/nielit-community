@@ -1,0 +1,52 @@
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Secrets & env
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Python junk
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# SQLite dev DBs
+*.sqlite
+*.sqlite3
+*.db
+
+# User-uploaded content (lives in a volume, not the image)
+app/static/uploads/
+
+# Caddy state (lives in a volume)
+caddy_data/
+caddy_config/
+
+# Compose volumes (when using bind mounts locally)
+postgres_data/
+app_uploads/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Docs aren't needed inside the image
+README.md
+LICENSE
+docs/
+
+# Scripts that are for the host, not the container
+scripts/bootstrap-docker.sh

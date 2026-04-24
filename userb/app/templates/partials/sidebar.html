@@ -1,0 +1,45 @@
+<div class="nav-menu">
+  <a href="{{ url_for('feed.home') }}" {% if request.endpoint == 'feed.home' %}class="active"{% endif %}>
+    <span class="ico">🏠</span> Home
+  </a>
+  <a href="{{ url_for('users.profile', username=current_user.username) }}">
+    <span class="ico">👤</span> My profile
+  </a>
+  <a href="{{ url_for('users.friend_requests') }}">
+    <span class="ico">👥</span> Friends
+    {% if pending_requests and pending_requests > 0 %}<span class="chip" style="margin-left:auto;">{{ pending_requests }}</span>{% endif %}
+  </a>
+  <a href="{{ url_for('groups.index') }}" {% if request.endpoint and request.endpoint.startswith('groups.') %}class="active"{% endif %}>
+    <span class="ico">👨‍👩‍👧</span> Groups
+  </a>
+  <a href="{{ url_for('pages.index') }}" {% if request.endpoint and request.endpoint.startswith('pages.') %}class="active"{% endif %}>
+    <span class="ico">📄</span> Pages
+  </a>
+  <a href="{{ url_for('feed.saved') }}" {% if request.endpoint == 'feed.saved' %}class="active"{% endif %}>
+    <span class="ico">🔖</span> Saved
+  </a>
+  <a href="{{ url_for('users.notifications_page') }}">
+    <span class="ico">🔔</span> Notifications
+    {% if unread_notif and unread_notif > 0 %}<span class="chip" style="margin-left:auto;">{{ unread_notif }}</span>{% endif %}
+  </a>
+  <div class="nav-menu-section">Actions</div>
+  <a href="{{ url_for('posts.create') }}">
+    <span class="ico">✏️</span> Create post
+  </a>
+  <a href="{{ url_for('pages.create') }}">
+    <span class="ico">➕</span> Create page
+  </a>
+  <a href="{{ url_for('groups.create') }}">
+    <span class="ico">➕</span> Create group
+  </a>
+  <div class="nav-menu-section">Account</div>
+  <a href="{{ url_for('users.settings') }}">
+    <span class="ico">⚙️</span> Settings
+  </a>
+  <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" style="display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:var(--text); font-weight:500; background:transparent; border:none; width:100%; text-align:left; font-size:inherit; cursor:pointer;">
+      <span class="ico">🚪</span> Sign out
+    </button>
+  </form>
+</div>

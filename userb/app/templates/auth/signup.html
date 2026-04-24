@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Create account · {{ APP_NAME }}{% endblock %}
+{% block guest_content %}
+<div class="auth-wrap">
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="auth-brand">
+        <span class="brand-logo">N</span>
+        <span>{{ APP_NAME }}</span>
+      </div>
+      <h1>Join your batch. Share what matters.</h1>
+      <p>Create an account to start posting, connect with friends, and follow updates from people, pages, and groups.</p>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-form-container">
+      <h2>Create your account</h2>
+      <p>It only takes a moment.</p>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label for="full_name">Full name</label>
+          <input id="full_name" type="text" name="full_name" required value="{{ request.form.get('full_name','') }}" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" name="email" required value="{{ request.form.get('email','') }}" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input id="username" type="text" name="username" required value="{{ request.form.get('username','') }}" autocomplete="username" pattern="[a-z0-9_]{3,30}" title="3–30 characters, lowercase letters, numbers, and underscores">
+          <small style="color:var(--text-muted); font-size:.82em;">Lowercase, 3–30 chars. Letters, numbers, underscores.</small>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input id="password" type="password" name="password" required minlength="8" autocomplete="new-password">
+          <small style="color:var(--text-muted); font-size:.82em;">At least 8 characters.</small>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" type="submit">Create account</button>
+      </form>
+      <div class="divider"></div>
+      <p class="text-center muted">
+        Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

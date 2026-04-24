@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Friend requests · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">👥 Friend requests</div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Received <span class="chip">{{ pending_in|length }}</span></h3>
+  {% if pending_in %}
+    <div style="display:flex; flex-direction:column; gap:10px;">
+    {% for fr in pending_in %}
+      {% set u = fr.user if fr.user_id != current_user.id else fr.friend %}
+      {% set sender = None %}
+      {# fr.user_id is the sender #}
+      {% set sender_id = fr.user_id %}
+      {% set sender = None %}
+      <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:10px;">
+        {% set sender_user = None %}
+        {# lookup sender via relationship - we'll need access to User #}
+        {% set sender_user = get_user(fr.user_id) %}
+        {% if sender_user %}
+        <a href="{{ url_for('users.profile', username=sender_user.username) }}" class="avatar-lg">
+          {% if sender_user.avatar %}<img src="{{ sender_user.avatar_url() }}" alt="">{% else %}{{ sender_user.initials() }}{% endif %}
+        </a>
+        <div style="flex:1; min-width:0;">
+          <a href="{{ url_for('users.profile', username=sender_user.username) }}" style="font-weight:700; color:var(--text);">{{ sender_user.full_name }}</a>
+          <div style="color:var(--text-muted); font-size:.82em;">@{{ sender_user.username }}</div>
+        </div>
+        <form method="post" action="{{ url_for('users.friend_accept') }}" style="margin:0;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ sender_user.id }}">
+          <button class="btn btn-primary" type="submit">✓ Accept</button>
+        </form>
+        <form method="post" action="{{ url_for('users.friend_reject') }}" style="margin:0;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ sender_user.id }}">
+          <button class="btn" type="submit">✕ Reject</button>
+        </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+  <p style="color:var(--text-muted);">No pending requests.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Sent <span class="chip">{{ pending_out|length }}</span></h3>
+  {% if pending_out %}
+    <div style="display:flex; flex-direction:column; gap:10px;">
+    {% for fr in pending_out %}
+      {% set target_user = get_user(fr.friend_id) %}
+      {% if target_user %}
+      <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:10px;">
+        <a href="{{ url_for('users.profile', username=target_user.username) }}" class="avatar-lg">
+          {% if target_user.avatar %}<img src="{{ target_user.avatar_url() }}" alt="">{% else %}{{ target_user.initials() }}{% endif %}
+        </a>
+        <div style="flex:1; min-width:0;">
+          <a href="{{ url_for('users.profile', username=target_user.username) }}" style="font-weight:700; color:var(--text);">{{ target_user.full_name }}</a>
+          <div style="color:var(--text-muted); font-size:.82em;">@{{ target_user.username }} · sent {{ fr.created_at|timeago }}</div>
+        </div>
+        <button class="btn" type="button" data-friend-action="cancel" data-user-id="{{ target_user.id }}">Cancel request</button>
+      </div>
+      {% endif %}
+    {% endfor %}
+    </div>
+  {% else %}
+  <p style="color:var(--text-muted);">No outgoing requests.</p>
+  {% endif %}
+</div>
+{% endblock %}

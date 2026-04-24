@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Create group · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">+ Create a group</div>
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group">
+      <label for="name">Group name</label>
+      <input type="text" name="name" id="name" required maxlength="120" placeholder="e.g. NIELIT Hyderabad 2024 Batch">
+    </div>
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea name="description" id="description" rows="4" maxlength="2000" placeholder="What is this group about?"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="privacy">Privacy</label>
+      <select name="privacy" id="privacy">
+        <option value="public">🌐 Public — anyone can see posts and join</option>
+        <option value="private">🔒 Private — only members see posts</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="cover">Cover image</label>
+      <input type="file" name="cover" id="cover" accept="image/*">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <a href="{{ url_for('groups.index') }}" class="btn">Cancel</a>
+      <button type="submit" class="btn btn-primary">Create group</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

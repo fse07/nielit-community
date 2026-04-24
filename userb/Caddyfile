@@ -1,0 +1,37 @@
+# Caddy serves on your domain with automatic Let's Encrypt TLS.
+# The APP_DOMAIN and ADMIN_EMAIL variables come from .env via docker-compose.yml.
+
+{$APP_DOMAIN} {
+    # Let's Encrypt contact address (receives renewal/expiry notices)
+    tls {$ADMIN_EMAIL}
+
+    # Gzip text responses
+    encode gzip
+
+    # Cap request body so giant uploads don't fill disk
+    request_body {
+        max_size 55MB
+    }
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Remove the Caddy banner
+        -Server
+    }
+
+    # Everything goes to the Flask app (it serves its own /static/*)
+    reverse_proxy web:8000 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Write access logs to stdout so `docker compose logs caddy` shows them
+    log {
+        output stdout
+        format console
+    }
+}
