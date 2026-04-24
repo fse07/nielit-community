@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Admin · New sponsored post · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">
+    <span>📢 New sponsored post</span>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm">← Back</a>
+  </div>
+  <p style="color:var(--text-muted); font-size:.9em; margin-top:-4px;">
+    Sponsored posts appear in feeds with higher ranking priority and are marked with a "Sponsored" badge.
+  </p>
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group">
+      <label for="content">Content</label>
+      <textarea name="content" id="content" rows="4" placeholder="Your sponsored message..."></textarea>
+    </div>
+    <div class="form-group">
+      <label for="link_url">Link (optional)</label>
+      <input type="url" name="link_url" id="link_url" placeholder="https://...">
+      <small style="color:var(--text-muted); font-size:.82em;">Will auto-fetch preview (title/description/image).</small>
+    </div>
+    <div class="form-group">
+      <label for="media">Image (optional)</label>
+      <input type="file" name="media" id="media" accept="image/*">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn">Cancel</a>
+      <button type="submit" class="btn btn-primary">Publish sponsored</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231e3a8a'/%3E%3Ctext x='50' y='70' font-size='60' font-weight='800' text-anchor='middle' fill='white' font-family='Arial'%3EN%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<header class="topbar">
+  <a href="{{ url_for('feed.home') }}" class="brand">
+    <span class="brand-logo">N</span>
+    <span class="brand-text">{{ APP_NAME }}</span>
+  </a>
+  <form class="topbar-search" method="get" action="{{ url_for('feed.search') }}">
+    <input type="search" name="q" placeholder="Search people, pages, groups, posts..." value="{{ request.args.get('q','') }}">
+  </form>
+  <nav class="topbar-actions">
+    <a href="{{ url_for('feed.home') }}" title="Home">🏠</a>
+    <a href="{{ url_for('users.friend_requests') }}" title="Friend requests">
+      👥
+      {% if pending_requests and pending_requests > 0 %}<span class="badge">{{ pending_requests }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('users.notifications_page') }}" title="Notifications">
+      🔔
+      {% if unread_notif and unread_notif > 0 %}<span class="badge">{{ unread_notif }}</span>{% endif %}
+    </a>
+    {% if current_user.is_admin %}
+      <a href="{{ url_for('admin.dashboard') }}" title="Admin">⚙️</a>
+    {% endif %}
+    <a href="{{ url_for('users.profile', username=current_user.username) }}" class="avatar-btn" title="My profile">
+      {% if current_user.avatar %}<img src="{{ current_user.avatar_url() }}" alt="">{% else %}
+      <div class="avatar" data-color="{{ current_user.id % 5 + 1 }}">{{ current_user.initials() }}</div>
+      {% endif %}
+    </a>
+  </nav>
+</header>
+{% endif %}
+
+<div class="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}">
+        <span>{{ msg }}</span>
+        <span class="flash-close">✕</span>
+      </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+{% block layout %}
+{% if current_user.is_authenticated %}
+<div class="layout">
+  <aside class="sidebar">
+    {% include 'partials/sidebar.html' %}
+  </aside>
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+  <aside class="rightbar">
+    {% block rightbar %}{% include 'partials/rightbar.html' %}{% endblock %}
+  </aside>
+</div>
+{% else %}
+  {% block guest_content %}{% endblock %}
+{% endif %}
+{% endblock %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

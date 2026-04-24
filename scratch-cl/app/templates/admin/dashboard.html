@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Admin · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">⚙️ Admin dashboard</div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="{{ url_for('admin.users') }}" class="btn">👥 Users</a>
+    <a href="{{ url_for('admin.posts') }}" class="btn">📝 Posts</a>
+    <a href="{{ url_for('admin.reports') }}" class="btn">🚩 Reports {% if stats.reports_open %}<span class="chip">{{ stats.reports_open }}</span>{% endif %}</a>
+    <a href="{{ url_for('admin.new_sponsored') }}" class="btn btn-primary">+ New sponsored post</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Overview</div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px;">
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:1.8em; font-weight:700; color:var(--primary);">{{ stats.users }}</div>
+      <div style="color:var(--text-muted); font-size:.8em;">Total users</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:1.8em; font-weight:700;">{{ stats.posts }}</div>
+      <div style="color:var(--text-muted); font-size:.8em;">Active posts</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:1.8em; font-weight:700;">{{ stats.deleted_posts }}</div>
+      <div style="color:var(--text-muted); font-size:.8em;">Deleted</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:1.8em; font-weight:700;">{{ stats.sponsored }}</div>
+      <div style="color:var(--text-muted); font-size:.8em;">Sponsored</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:1.8em; font-weight:700; color:var(--danger);">{{ stats.reports_open }}</div>
+      <div style="color:var(--text-muted); font-size:.8em;">Open reports</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+  <div class="card">
+    <div class="card-title">Recent signups</div>
+    <div class="side-list">
+      {% for u in recent_users %}
+      <a href="{{ url_for('users.profile', username=u.username) }}" class="side-item">
+        <div class="avatar-sm">{% if u.avatar %}<img src="{{ u.avatar_url() }}" alt="">{% else %}{{ u.initials() }}{% endif %}</div>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:.9em;">{{ u.full_name }}{% if u.is_admin %} <span class="chip">admin</span>{% endif %}</div>
+          <div style="color:var(--text-muted); font-size:.78em;">@{{ u.username }} · {{ u.created_at|timeago }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Recent posts</div>
+    <div class="side-list">
+      {% for p in recent_posts %}
+      <a href="{{ url_for('posts.detail', post_id=p.id) }}" class="side-item">
+        <div class="avatar-sm">{% if p.author.avatar %}<img src="{{ p.author.avatar_url() }}" alt="">{% else %}{{ p.author.initials() }}{% endif %}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:600; font-size:.88em;">{{ p.author.full_name }} · {{ p.post_type }}</div>
+          <div style="color:var(--text-muted); font-size:.78em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            {% if p.is_deleted %}<span style="color:var(--danger);">[deleted]</span> {% endif %}
+            {% if p.is_sponsored %}<span class="post-sponsored-badge" style="font-size:.9em;">ad</span> {% endif %}
+            {{ (p.content or '[no text]')[:60] }} · {{ p.created_at|timeago }}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% if open_reports %}
+<div class="card">
+  <div class="card-title">Open reports</div>
+  <table style="width:100%; font-size:.9em;">
+    <thead><tr><th style="text-align:left;">Reporter</th><th style="text-align:left;">Target</th><th style="text-align:left;">Reason</th><th></th></tr></thead>
+    <tbody>
+    {% for r in open_reports %}
+      <tr style="border-top:1px solid var(--border);">
+        <td style="padding:8px 4px;">{{ r.reporter.username }}</td>
+        <td style="padding:8px 4px;">{{ r.target_type }} #{{ r.target_id }}</td>
+        <td style="padding:8px 4px;">{{ r.reason[:60] }}</td>
+        <td style="padding:8px 4px;"><a href="{{ url_for('admin.reports') }}" class="btn btn-sm">Review</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

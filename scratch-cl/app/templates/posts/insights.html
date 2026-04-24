@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Post insights · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:12px;">
+  <a href="{{ url_for('posts.detail', post_id=post.id) }}" class="btn btn-ghost btn-sm">← Back to post</a>
+</div>
+
+<div class="card">
+  <div class="card-title">📊 Post insights</div>
+  <div style="color:var(--text-muted); font-size:.9em; margin-bottom:16px;">
+    {{ post.created_at|timeago }} · {{ post.post_type }}
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;">
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:2em; font-weight:700; color:var(--primary);">{{ total_views }}</div>
+      <div style="color:var(--text-muted); font-size:.85em;">Total views</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:2em; font-weight:700;">{{ unique_viewers }}</div>
+      <div style="color:var(--text-muted); font-size:.85em;">Unique viewers</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:2em; font-weight:700;">{{ post.reaction_count }}</div>
+      <div style="color:var(--text-muted); font-size:.85em;">Reactions</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:2em; font-weight:700;">{{ post.comment_count }}</div>
+      <div style="color:var(--text-muted); font-size:.85em;">Comments</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:2em; font-weight:700;">{{ post.share_count }}</div>
+      <div style="color:var(--text-muted); font-size:.85em;">Shares</div>
+    </div>
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:2em; font-weight:700;">{{ saves }}</div>
+      <div style="color:var(--text-muted); font-size:.85em;">Saves</div>
+    </div>
+    {% if total_watch > 0 %}
+    <div style="padding:16px; background:var(--surface-2); border-radius:10px;">
+      <div style="font-size:2em; font-weight:700;">{{ (total_watch / 60)|round(1) }}m</div>
+      <div style="color:var(--text-muted); font-size:.85em;">Total watch time</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{# Reaction breakdown #}
+{% if reactions %}
+<div class="card">
+  <div class="card-title">Reaction breakdown</div>
+  {% set total_reacts = reactions.values()|sum %}
+  {% set icos = {'like':'👍','love':'❤️','haha':'😂','wow':'😮','sad':'😢','angry':'😡'} %}
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    {% for rtype, count in reactions.items() %}
+    {% set pct = (100 * count / total_reacts)|round(0)|int if total_reacts else 0 %}
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:40px; font-size:1.2em;">{{ icos.get(rtype, '·') }}</div>
+      <div style="flex:1; background:var(--surface-2); border-radius:999px; height:20px; overflow:hidden; position:relative;">
+        <div style="width:{{ pct }}%; background:var(--primary); height:100%; border-radius:999px;"></div>
+      </div>
+      <div style="min-width:80px; text-align:right; font-size:.9em;">{{ count }} ({{ pct }}%)</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# Hourly views #}
+{% if hourly_views %}
+<div class="card">
+  <div class="card-title">Views in the last 24 hours</div>
+  {% set max_h = hourly_views|map(attribute=1)|max %}
+  <div style="display:flex; align-items:flex-end; gap:3px; height:120px; margin:12px 0;">
+    {% for label, count in hourly_views %}
+    {% set h = ((count / max_h) * 100)|round(0)|int if max_h else 0 %}
+    <div title="{{ label }}: {{ count }}" style="flex:1; background:var(--primary); height:{{ h if h > 2 else 2 }}%; border-radius:3px 3px 0 0; min-width:8px;"></div>
+    {% endfor %}
+  </div>
+  <div style="display:flex; justify-content:space-between; color:var(--text-muted); font-size:.75em;">
+    <span>{{ hourly_views[0][0] if hourly_views else '' }}</span>
+    <span>{{ hourly_views[-1][0] if hourly_views else '' }}</span>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

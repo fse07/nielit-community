@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ user.full_name }}'s friends · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">
+    <a href="{{ url_for('users.profile', username=user.username) }}" style="color:inherit;">{{ user.full_name }}</a> · Friends ({{ friends|length }})
+  </div>
+</div>
+
+{% if friends %}
+<div class="card">
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px;">
+    {% for f in friends %}
+      <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:10px;">
+        <a href="{{ url_for('users.profile', username=f.username) }}" class="avatar-lg">
+          {% if f.avatar %}<img src="{{ f.avatar_url() }}" alt="">{% else %}{{ f.initials() }}{% endif %}
+        </a>
+        <div style="min-width:0; flex:1;">
+          <a href="{{ url_for('users.profile', username=f.username) }}" style="font-weight:700; color:var(--text); display:block; text-decoration:none;">{{ f.full_name }}</a>
+          <div style="color:var(--text-muted); font-size:.82em;">@{{ f.username }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="card empty">
+  <div style="font-size:3em;">👥</div>
+  <h3>No friends yet</h3>
+  <p>Search for people to add them as friends.</p>
+</div>
+{% endif %}
+{% endblock %}

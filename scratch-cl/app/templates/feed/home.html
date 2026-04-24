@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Home · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{# Composer #}
+<div class="card" style="padding:12px;">
+  <div class="composer" style="margin:0; border:none; box-shadow:none; padding:0;">
+    <div class="avatar">
+      {% if current_user.avatar %}<img src="{{ current_user.avatar_url() }}" alt="">{% else %}{{ current_user.initials() }}{% endif %}
+    </div>
+    <a href="{{ url_for('posts.create') }}" class="composer-input">What's on your mind, {{ current_user.full_name.split()[0] }}?</a>
+  </div>
+  <div class="composer-actions">
+    <a href="{{ url_for('posts.create') }}?type=photo" class="btn btn-ghost btn-sm">📷 Photo/Video</a>
+    <a href="{{ url_for('posts.create') }}?type=poll" class="btn btn-ghost btn-sm">📊 Poll</a>
+    <a href="{{ url_for('posts.create') }}?type=link" class="btn btn-ghost btn-sm">🔗 Link</a>
+    <a href="{{ url_for('posts.create') }}" class="btn btn-primary btn-sm">Post</a>
+  </div>
+</div>
+
+{# Ranked feed #}
+<div id="feed-list" data-has-next="{{ 'true' if has_next else 'false' }}" data-next-page="{{ page + 1 }}">
+  {% if ranked %}
+    {% include 'feed/_post_list.html' %}
+  {% else %}
+    <div class="card empty">
+      <div style="font-size:3em;">👋</div>
+      <h3>Your feed is quiet</h3>
+      <p>Add friends, follow pages, or join groups to see posts here.</p>
+      <div style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
+        <a href="{{ url_for('pages.index') }}" class="btn btn-primary">Discover pages</a>
+        <a href="{{ url_for('groups.index') }}" class="btn">Find groups</a>
+        <a href="{{ url_for('posts.create') }}" class="btn">Create post</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+{# Loading sentinel for infinite scroll #}
+{% if has_next %}
+<div id="feed-loader" style="text-align:center; padding:20px; color:var(--text-muted);">
+  <span class="spinner"></span> Loading more...
+</div>
+{% endif %}
+{% endblock %}
+
+{% block rightbar %}
+{# Suggested friends #}
+{% if suggested_friends %}
+<div class="card">
+  <div class="card-title">People you may know</div>
+  <div class="side-list">
+    {% for u in suggested_friends %}
+      <div class="side-item" style="justify-content:space-between;">
+        <a href="{{ url_for('users.profile', username=u.username) }}" style="display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none;">
+          <div class="avatar-sm">{% if u.avatar %}<img src="{{ u.avatar_url() }}" alt="">{% else %}{{ u.initials() }}{% endif %}</div>
+          <div style="min-width:0;">
+            <div style="font-weight:600; font-size:.92em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ u.full_name }}</div>
+            <div style="color:var(--text-muted); font-size:.8em;">@{{ u.username }}</div>
+          </div>
+        </a>
+        <button class="btn btn-sm btn-primary" type="button" data-friend-action="request" data-user-id="{{ u.id }}">+ Add</button>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# Suggested pages #}
+{% if suggested_pages %}
+<div class="card">
+  <div class="card-title">Pages to follow</div>
+  <div class="side-list">
+    {% for p in suggested_pages %}
+      <a href="{{ url_for('pages.detail', slug=p.slug) }}" class="side-item">
+        <div class="avatar-sm">{% if p.avatar %}<img src="{{ p.avatar_url() }}" alt="">{% else %}📄{% endif %}</div>
+        <div style="min-width:0; flex:1;">
+          <div style="font-weight:600; font-size:.92em;">{{ p.name }}</div>
+          <div style="color:var(--text-muted); font-size:.8em;">{{ p.follower_count() }} followers</div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# Suggested groups #}
+{% if suggested_groups %}
+<div class="card">
+  <div class="card-title">Groups you might like</div>
+  <div class="side-list">
+    {% for g in suggested_groups %}
+      <a href="{{ url_for('groups.detail', slug=g.slug) }}" class="side-item">
+        <div class="avatar-sm" style="border-radius:8px;">👥</div>
+        <div style="min-width:0; flex:1;">
+          <div style="font-weight:600; font-size:.92em;">{{ g.name }}</div>
+          <div style="color:var(--text-muted); font-size:.8em;">{{ g.member_count() }} members</div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

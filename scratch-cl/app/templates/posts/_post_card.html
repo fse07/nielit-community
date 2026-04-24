@@ -1,0 +1,235 @@
+{# Render a single post. Context: post (required), reason (optional string).
+   JS in main.js expects:
+     .post[data-post-id], .post-action-like[data-post-id] containing .main-btn and .reaction-bar,
+     .react-btn[data-post-id][data-reaction], .save-btn[data-post-id] with .lbl,
+     .comment-toggle[data-post-id], #comments-{id} with .comments-list and .comment-form,
+     .reaction-count-{id}, .comment-count-{id}.
+#}
+{% set my_reaction = post.current_user_reaction(current_user.id) %}
+{% set my_saved = current_user.has_saved(post.id) %}
+{% set reaction_cls = {'love':'active-love','haha':'active-haha','wow':'active-wow','sad':'active','angry':'active','like':'active'} %}
+{% set reaction_ico = {'love':'❤️','haha':'😂','wow':'😮','sad':'😢','angry':'😡','like':'👍'} %}
+{% set reaction_lbl = {'love':'Love','haha':'Haha','wow':'Wow','sad':'Sad','angry':'Angry','like':'Like'} %}
+
+<article class="post" data-post-id="{{ post.id }}">
+  {% if reason is defined and reason %}
+    <div style="padding:8px 16px; font-size:.82em; color:var(--text-muted); background:var(--surface-2); border-bottom:1px solid var(--border);">
+      {{ reason }}
+    </div>
+  {% endif %}
+
+  <header class="post-header">
+    <a href="{{ url_for('users.profile', username=post.author.username) }}" class="avatar">
+      {% if post.author.avatar %}<img src="{{ post.author.avatar_url() }}" alt="">{% else %}{{ post.author.initials() }}{% endif %}
+    </a>
+    <div class="post-header-info">
+      <div>
+        {% if post.page_id and post.page %}
+          <a class="post-author" href="{{ url_for('pages.detail', slug=post.page.slug) }}">{{ post.page.name }}</a>
+          <span style="color:var(--text-muted); font-size:.9em;"> · via </span>
+          <a href="{{ url_for('users.profile', username=post.author.username) }}" style="font-size:.9em;">{{ post.author.full_name }}</a>
+        {% elif post.group_id and post.group %}
+          <a class="post-author" href="{{ url_for('users.profile', username=post.author.username) }}">{{ post.author.full_name }}</a>
+          <span style="color:var(--text-muted); font-size:.9em;"> · in </span>
+          <a href="{{ url_for('groups.detail', slug=post.group.slug) }}" style="font-size:.9em;">{{ post.group.name }}</a>
+        {% else %}
+          <a class="post-author" href="{{ url_for('users.profile', username=post.author.username) }}">{{ post.author.full_name }}</a>
+        {% endif %}
+      </div>
+      <div class="post-meta">
+        <a href="{{ url_for('posts.detail', post_id=post.id) }}" style="color:var(--text-muted);">{{ post.created_at|timeago }}</a>
+        <span>·</span>
+        <span class="post-visibility">
+          {% if post.visibility == 'public' %}🌐 Public
+          {% elif post.visibility == 'friends' %}👥 Friends
+          {% elif post.visibility == 'friends_of_friends' %}👫 Friends of friends
+          {% elif post.visibility == 'only_me' %}🔒 Only me
+          {% endif %}
+        </span>
+        {% if post.is_sponsored %}<span>·</span><span class="post-sponsored-badge">Sponsored</span>{% endif %}
+        {% if post.feeling %}<span>· feeling {{ post.feeling }}</span>{% endif %}
+        {% if post.location %}<span>· at {{ post.location }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="post-menu">
+      <button class="post-menu-btn" type="button" aria-label="Post options">⋯</button>
+      <div class="post-menu-dropdown">
+        <a href="{{ url_for('posts.detail', post_id=post.id) }}" class="btn btn-ghost btn-block" style="justify-content:flex-start;">🔗 Open post</a>
+        {% if post.author_id == current_user.id or current_user.is_admin %}
+          <a href="{{ url_for('posts.insights', post_id=post.id) }}" class="btn btn-ghost btn-block" style="justify-content:flex-start;">📊 Insights</a>
+          <form method="post" action="{{ url_for('posts.delete', post_id=post.id) }}" onsubmit="return confirm('Delete this post?');" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-ghost btn-block" style="justify-content:flex-start; color:var(--danger);" type="submit">🗑 Delete</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  {% if post.content %}
+  <div class="post-content">{{ post.content|linkify|safe }}</div>
+  {% endif %}
+
+  {# Media grid #}
+  {% if post.media %}
+    {% set n = post.media|length %}
+    <div class="post-media">
+      <div class="post-media-grid {% if n==2 %}g2{% elif n==3 %}g3{% elif n>=4 %}g4{% endif %}">
+        {% for m in post.media[:4] %}
+          {% if m.media_type == 'video' %}
+            <video src="{{ m.url() }}" controls preload="metadata" playsinline style="width:100%; {% if post.post_type=='short_video' %}max-height:640px;{% else %}max-height:520px;{% endif %} background:#000;"></video>
+          {% else %}
+            <img src="{{ m.url() }}" alt="" loading="lazy" style="width:100%; max-height:520px; object-fit:cover; background:#000;">
+          {% endif %}
+          {% if n > 4 and loop.last %}
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.5); color:#fff; font-size:1.6em; font-weight:700;">+{{ n - 4 }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {# Link preview #}
+  {% if post.link_url %}
+    <a href="{{ post.link_url }}" target="_blank" rel="noopener" class="post-link-preview" style="display:block; color:inherit;">
+      {% if post.link_image %}
+        <img src="{{ post.link_image }}" alt="" style="width:100%; max-height:260px; object-fit:cover; background:var(--surface-2);">
+      {% endif %}
+      <div style="padding:12px 14px;">
+        <div style="font-size:.75em; text-transform:uppercase; color:var(--text-muted); letter-spacing:.05em;">{{ post.link_url.split('/')[2] if '/' in post.link_url else post.link_url }}</div>
+        <div style="font-weight:700; margin-top:2px;">{{ post.link_title or post.link_url }}</div>
+        {% if post.link_description %}<div style="color:var(--text-muted); font-size:.9em; margin-top:4px;">{{ post.link_description[:160] }}{% if post.link_description|length > 160 %}…{% endif %}</div>{% endif %}
+      </div>
+    </a>
+  {% endif %}
+
+  {# Nested shared post #}
+  {% if post.shared_post %}
+    <div class="post-shared">
+      <div style="padding:12px 14px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <div class="avatar-sm">{% if post.shared_post.author.avatar %}<img src="{{ post.shared_post.author.avatar_url() }}" alt="">{% else %}{{ post.shared_post.author.initials() }}{% endif %}</div>
+          <div>
+            <a href="{{ url_for('users.profile', username=post.shared_post.author.username) }}" style="font-weight:700;">{{ post.shared_post.author.full_name }}</a>
+            <div style="font-size:.8em; color:var(--text-muted);">{{ post.shared_post.created_at|timeago }}</div>
+          </div>
+        </div>
+        {% if post.shared_post.content %}<div style="white-space:pre-wrap;">{{ post.shared_post.content|linkify|safe }}</div>{% endif %}
+      </div>
+      {% if post.shared_post.media %}
+        <div style="display:grid; grid-template-columns:repeat({{ [post.shared_post.media|length, 2]|min }}, 1fr); gap:2px; background:#000;">
+          {% for m in post.shared_post.media[:2] %}
+            {% if m.media_type == 'video' %}
+              <video src="{{ m.url() }}" controls preload="metadata" style="width:100%; max-height:320px;"></video>
+            {% else %}
+              <img src="{{ m.url() }}" alt="" loading="lazy" style="width:100%; max-height:320px; object-fit:cover;">
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {# Poll #}
+  {% if post.poll %}
+    {% set total = post.poll.total_votes() %}
+    {% set user_voted = post.poll.user_voted_options(current_user.id) %}
+    {% set show_results = total > 0 %}
+    <div class="poll">
+      <div class="poll-question">{{ post.poll.question }}</div>
+      <form method="post" action="{{ url_for('posts.vote_poll', poll_id=post.poll.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% for opt in post.poll.options %}
+          {% set votes = opt.vote_count() %}
+          {% set pct = (100 * votes / total)|round(0, 'floor')|int if total > 0 else 0 %}
+          <label class="poll-option">
+            <span style="display:flex; align-items:center; gap:10px; position:relative; z-index:1;">
+              <input type="{{ 'checkbox' if post.poll.multi_choice else 'radio' }}" name="option_id" value="{{ opt.id }}" {% if opt.id in user_voted %}checked{% endif %} {% if post.poll.is_closed() %}disabled{% endif %}>
+              <span>{{ opt.text }}</span>
+            </span>
+            <span style="position:relative; z-index:1; color:var(--text-muted); font-size:.9em;">
+              {% if show_results %}{{ pct }}% · {{ votes }}{% endif %}
+            </span>
+            {% if show_results %}
+              <span style="position:absolute; left:0; top:0; bottom:0; width:{{ pct }}%; background:var(--primary-soft); z-index:0;"></span>
+            {% endif %}
+          </label>
+        {% endfor %}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <div class="poll-meta">
+            {{ total }} vote{{ 's' if total != 1 else '' }}
+            {% if post.poll.is_closed() %} · closed{% elif post.poll.ends_at %} · ends {{ post.poll.ends_at|timeago }}{% endif %}
+          </div>
+          {% if not post.poll.is_closed() %}
+            <button type="submit" class="btn btn-primary btn-sm">{% if user_voted %}Change vote{% else %}Vote{% endif %}</button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+  {# Stats row #}
+  <div class="post-stats">
+    <span class="reaction-count-{{ post.id }}">{{ post.reaction_count }} {{ 'reaction' if post.reaction_count == 1 else 'reactions' }}</span>
+    <span>
+      <span class="comment-count-{{ post.id }}">{{ post.comment_count }}</span> comments ·
+      {{ post.share_count }} share{{ 's' if post.share_count != 1 else '' }}
+    </span>
+  </div>
+
+  {# Actions #}
+  <div class="post-actions">
+    <div class="post-action-like" data-post-id="{{ post.id }}" style="position:relative; flex:1;">
+      <div class="reaction-bar">
+        <button class="react-btn" type="button" data-post-id="{{ post.id }}" data-reaction="like" title="Like">👍</button>
+        <button class="react-btn" type="button" data-post-id="{{ post.id }}" data-reaction="love" title="Love">❤️</button>
+        <button class="react-btn" type="button" data-post-id="{{ post.id }}" data-reaction="haha" title="Haha">😂</button>
+        <button class="react-btn" type="button" data-post-id="{{ post.id }}" data-reaction="wow" title="Wow">😮</button>
+        <button class="react-btn" type="button" data-post-id="{{ post.id }}" data-reaction="sad" title="Sad">😢</button>
+        <button class="react-btn" type="button" data-post-id="{{ post.id }}" data-reaction="angry" title="Angry">😡</button>
+      </div>
+      <button class="post-action post-action-like-main main-btn {% if my_reaction %}{{ reaction_cls.get(my_reaction, 'active') }}{% endif %}" type="button" style="width:100%;">
+        <span class="ico">{% if my_reaction %}{{ reaction_ico.get(my_reaction, '👍') }}{% else %}👍{% endif %}</span>
+        <span class="lbl">{% if my_reaction %}{{ reaction_lbl.get(my_reaction, 'Like') }}{% else %}Like{% endif %}</span>
+      </button>
+    </div>
+    <button class="post-action comment-toggle" type="button" data-post-id="{{ post.id }}">
+      <span class="ico">💬</span><span class="lbl">Comment</span>
+    </button>
+    <form method="post" action="{{ url_for('posts.share', post_id=post.id) }}" style="flex:1; margin:0;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="visibility" value="friends">
+      <button class="post-action" type="submit" style="width:100%;">
+        <span class="ico">↗</span><span class="lbl">Share</span>
+      </button>
+    </form>
+    <button class="post-action save-btn {% if my_saved %}active{% endif %}" type="button" data-post-id="{{ post.id }}">
+      <span class="ico">🔖</span><span class="lbl">{% if my_saved %}Saved{% else %}Save{% endif %}</span>
+    </button>
+  </div>
+
+  {# Comments section #}
+  <div class="comments-section" id="comments-{{ post.id }}">
+    <div class="comments-list">
+      {% for c in post.comments if not c.parent_id %}
+        <div class="comment" id="comment-{{ c.id }}">
+          <div class="avatar-sm">
+            {% if c.author.avatar %}<img src="{{ c.author.avatar_url() }}" alt="">{% else %}<span>{{ c.author.initials() }}</span>{% endif %}
+          </div>
+          <div class="comment-body">
+            <a class="comment-author" href="{{ url_for('users.profile', username=c.author.username) }}">{{ c.author.full_name }}</a>
+            <span class="comment-text">{{ c.content }}</span>
+            <div class="comment-meta">{{ c.created_at|timeago }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <form class="comment-form" data-post-id="{{ post.id }}" onsubmit="return false;">
+      <div class="avatar-sm">
+        {% if current_user.avatar %}<img src="{{ current_user.avatar_url() }}" alt="">{% else %}<span>{{ current_user.initials() }}</span>{% endif %}
+      </div>
+      <input type="text" name="content" placeholder="Write a comment..." style="flex:1; border-radius:999px; padding:10px 16px; background:var(--surface); border:1px solid var(--border);">
+      <button type="submit" class="btn btn-primary btn-sm">Post</button>
+    </form>
+  </div>
+</article>
